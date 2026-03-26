@@ -10,7 +10,7 @@ A web application that lets users explore real-time economic indicators, develop
 
 ## Demo
 
-[Watch the demo video](#) <!-- Replace # with your YouTube/Vimeo link -->
+[Watch the demo video](https://youtu.be/T2dB_JVmW38)
 
 ---
 
