@@ -187,6 +187,12 @@ The load balancer uses **HAProxy** to handle HTTPS termination and distribute in
        server web-02 <web02-ip>:80 check
    ```
 
+   **Configuration explained:**
+   - `balance roundrobin` — distributes each incoming request to the next server in turn, ensuring traffic is shared evenly between Web01 and Web02
+   - `server web-01 <web01-ip>:80` — registers Web01 as a backend target, telling HAProxy where to forward requests
+   - `server web-02 <web02-ip>:80` — registers Web02 as a second backend target
+   - `check` — enables active health checking; HAProxy periodically pings each server and automatically removes it from the pool if it goes down, so traffic is only sent to servers that are responding
+
 4. Verify the config and restart HAProxy:
    ```bash
    sudo haproxy -c -f /etc/haproxy/haproxy.cfg

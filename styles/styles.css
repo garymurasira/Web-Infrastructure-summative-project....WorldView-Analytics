@@ -418,6 +418,28 @@ header h1 {
   text-align: right;
 }
 
+/* Chart Spinner */
+.chart-spinner {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+}
+
+.chart-spinner::after {
+  content: '';
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Chart */
 .chart-section {
   flex: 1;

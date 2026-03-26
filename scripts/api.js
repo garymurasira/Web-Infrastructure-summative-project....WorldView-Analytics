@@ -3,6 +3,7 @@
 const countryCache = new Map();
 const indicatorsCache = new Map();
 let countriesList = [];
+let countriesLoadFailed = false;
 
 // Load all WB countries into memory for name-based search
 async function initCountriesList() {
@@ -16,6 +17,7 @@ async function initCountriesList() {
     }
   } catch (e) {
     console.warn('Could not load countries list:', e);
+    countriesLoadFailed = true;
   }
 }
 

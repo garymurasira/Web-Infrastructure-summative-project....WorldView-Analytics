@@ -64,6 +64,12 @@ async function loadCountryData(name) {
   compareCountryISO = null;
   compareCountryName = null;
 
+  if (countriesLoadFailed) {
+    alert('Could not load the countries list. Please check your internet connection and refresh the page.');
+    showPage('landing');
+    return;
+  }
+
   const countryInfo = await fetchCountry(name);
 
   if (countryInfo.iso2 === 'XX') {
@@ -149,7 +155,9 @@ async function populateIndicators(category) {
 
 // Render the chart for a category, with optional compare country overlay
 async function updateChart(iso2, category) {
-  const ctx = document.getElementById('dataChart').getContext('2d');
+  const spinner = document.getElementById('chartSpinner');
+  const canvas = document.getElementById('dataChart');
+  const ctx = canvas.getContext('2d');
   const primary = (indicatorData[category] || indicatorData.economy).find(i => i.id);
 
   if (!primary || !iso2 || iso2 === 'XX') {
@@ -157,6 +165,8 @@ async function updateChart(iso2, category) {
     return;
   }
 
+  spinner.style.display = 'flex';
+  canvas.style.display = 'none';
   document.getElementById('chartTitle').textContent = `${primary.name} — Loading...`;
 
   const [ts1, ts2] = await Promise.all([
@@ -200,6 +210,9 @@ async function updateChart(iso2, category) {
 
   document.getElementById('chartTitle').textContent = title;
 
+  spinner.style.display = 'none';
+  canvas.style.display = 'block';
+
   chartInstance = new Chart(ctx, {
     type: 'line',
     data: { labels, datasets },
@@ -214,6 +227,8 @@ async function updateChart(iso2, category) {
 
 // Empty chart shown when no data is available
 function renderEmptyChart(ctx) {
+  document.getElementById('chartSpinner').style.display = 'none';
+  document.getElementById('dataChart').style.display = 'block';
   if (chartInstance) chartInstance.destroy();
   document.getElementById('chartTitle').textContent = 'No data available';
   chartInstance = new Chart(ctx, {
