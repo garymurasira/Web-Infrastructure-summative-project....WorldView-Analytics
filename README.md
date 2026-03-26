@@ -4,6 +4,14 @@ A web application that lets users explore real-time economic indicators, develop
 
 **Live app:** https://www.god3v.tech
 
+> **No API key required.** The World Bank API is fully open. No `.env` file or environment setup is needed to run this project.
+
+---
+
+## Demo
+
+[Watch the demo video](#) <!-- Replace # with your YouTube/Vimeo link -->
+
 ---
 
 ## Features
@@ -15,15 +23,23 @@ A web application that lets users explore real-time economic indicators, develop
 - **10-year trend chart** — Chart.js line chart showing historical data for the active category
 - **Country comparison** — overlay a second country's trend on the chart for side-by-side comparison
 - **Sort indicators** — sort any category highest to lowest or lowest to highest
-- **Error handling** — graceful N/A display when API data is unavailable; informative alerts for invalid searches
+- **Error handling** — when the API returns no data for an indicator, the value displays as `N/A` and the progress bar renders empty rather than breaking. Invalid country searches trigger a clear alert message guiding the user to try the full country name.
 - **Input validation & XSS protection** — all user inputs are sanitized before processing; all dynamic HTML is escaped before insertion into the DOM
+
+---
+
+## Screenshots
+
+![Landing page](screenshots/Landing.png)
+
+![Dashboard](screenshots/dashboard.png)
 
 ---
 
 ## Project Structure
 
 ```
-WorldBank API project/
+WorldView-Analytics/
 ├── index.html              # Main HTML — landing page + dashboard
 ├── scripts/
 │   ├── config.js           # WB API base URL and all indicator definitions
@@ -49,7 +65,7 @@ No build tools or dependencies required. This is a pure HTML/CSS/JS application.
 
 2. Open `index.html` in your browser:
    - Double-click `index.html`, **or**
-   - Use a local server to avoid any browser CORS restrictions:
+   - Serve it with a local server for a cleaner development experience:
      ```bash
      # Python
      python -m http.server 8000
@@ -59,8 +75,6 @@ No build tools or dependencies required. This is a pure HTML/CSS/JS application.
      ```
    - Then visit `http://localhost:8000`
 
-> **Note:** The World Bank API does not require an API key. No environment setup is needed.
-
 ---
 
 ## API Reference
@@ -69,8 +83,8 @@ No build tools or dependencies required. This is a pure HTML/CSS/JS application.
 
 - **Base URL:** `https://api.worldbank.org/v2`
 - **Documentation:** https://datahelpdesk.worldbank.org/knowledgebase/articles/889392-about-the-indicators-api-documentation
-- **Authentication:** None required — fully open API
-- **Rate limits:** No strict rate limit for reasonable usage
+- **Authentication:** None required — fully open API, no key needed
+- **Rate limits:** The World Bank API has no published hard rate limit. For normal single-user usage (a few dozen requests per page load), no throttling is applied. Avoid bulk automated requests.
 - **Key endpoints used:**
 
 | Endpoint | Purpose |
@@ -83,9 +97,9 @@ No build tools or dependencies required. This is a pure HTML/CSS/JS application.
 
 ## Deployment
 
-The application is deployed on two web servers (Web01 and Web02) behind a load balancer (Lb01).
+The application runs on two web servers (Web01 and Web02) behind a load balancer (Lb01).
 
-### Prerequisites on each server
+### Prerequisites on each web server
 
 ```bash
 sudo apt update
@@ -109,7 +123,7 @@ Run these steps on **both** Web01 and Web02:
 
 3. From your **local machine**, transfer the files:
    ```bash
-   scp -i your-key.pem -r index.html scripts/ styles/ ubuntu@<server-ip>:/var/www/worldview/
+   scp -r -i your-key.pem index.html scripts/ styles/ ubuntu@<server-ip>:/var/www/worldview/
    ```
 
 4. Configure Nginx on the server:
@@ -148,19 +162,24 @@ Repeat steps 1–6 for the second server.
 
 ### Configure the Load Balancer (Lb01)
 
-The load balancer (Lb01) runs **HAProxy**, which was already installed and configured on the server. HAProxy handles HTTPS termination and round-robin load balancing between Web01 and Web02.
+The load balancer uses **HAProxy** to handle HTTPS termination and distribute incoming traffic between Web01 and Web02 using round-robin.
 
 1. SSH into Lb01:
    ```bash
    ssh -i your-key.pem ubuntu@<lb01-ip>
    ```
 
-2. Edit the HAProxy config:
+2. Install HAProxy if not present:
+   ```bash
+   sudo apt update && sudo apt install haproxy -y
+   ```
+
+3. Edit the HAProxy config:
    ```bash
    sudo nano /etc/haproxy/haproxy.cfg
    ```
 
-   The relevant backend section points to both web servers:
+   Add or update the backend section with your actual server IPs:
    ```
    backend www-backend
        balance roundrobin
@@ -168,19 +187,19 @@ The load balancer (Lb01) runs **HAProxy**, which was already installed and confi
        server web-02 <web02-ip>:80 check
    ```
 
-3. Verify and restart HAProxy:
+4. Verify the config and restart HAProxy:
    ```bash
    sudo haproxy -c -f /etc/haproxy/haproxy.cfg
    sudo systemctl restart haproxy
    ```
 
-4. Visit `https://www.god3v.tech` — HAProxy will round-robin requests between Web01 and Web02.
+5. Visit `http://<lb01-ip>` — HAProxy will round-robin requests between Web01 and Web02.
 
 ---
 
 ### Verifying Load Balancing
 
-To confirm traffic is being distributed between both servers, add a temporary identifier to each server's response:
+To confirm traffic is being split between both servers, place a different identifier file on each server. When you request this file through the load balancer, the response should alternate between servers on each reload — confirming round-robin is working.
 
 ```bash
 # On Web01
@@ -190,27 +209,38 @@ echo "Web01" | sudo tee /var/www/worldview/server.txt
 echo "Web02" | sudo tee /var/www/worldview/server.txt
 ```
 
-Then repeatedly hit `https://www.god3v.tech/server.txt` — the response should alternate between `Web01` and `Web02`.
+Then run this several times from your local machine:
+
+```bash
+curl http://<lb01-ip>/server.txt
+```
+
+The response should alternate between `Web01` and `Web02`.
 
 ---
 
 ## Challenges
 
-- **World Bank API name search** — The WB API has no native name-search endpoint. Solved by fetching the full countries list on startup and filtering client-side, with results cached in memory.
-- **Missing/sparse data** — Some indicators have no recent data for certain countries. Handled with `N/A` display and progress bars that render as empty rather than breaking.
-- **Dual-axis chart removed** — Original design had GDP + Life Expectancy on the same chart with two Y-axes. Replaced with a single indicator per chart to keep it clean and comparable across countries.
-- **HAProxy conflict on Lb01** — Attempting to run Nginx on the load balancer failed because HAProxy was already occupying port 80. Resolved by using the pre-configured HAProxy instead of Nginx, which also provided the added benefit of HTTPS support via an existing SSL certificate.
-- **XSS protection** — User inputs are passed through a `sanitizeInput()` function that strips HTML characters (`< > & " '`) and limits length to 100 characters. Dynamic content inserted into `innerHTML` is passed through `escapeHTML()` to prevent script injection.
+- **World Bank API name search** — The WB API has no native name-search endpoint; it only supports ISO country codes. This meant users couldn't search by name out of the box. The solution was to fetch the full list of 250+ countries on startup, cache it in memory, and filter client-side on each search. This adds a one-time startup cost but makes all subsequent searches instant.
+
+- **Missing/sparse data** — Many World Bank indicators have gaps: some countries haven't reported certain metrics in years, and some metrics simply don't apply to all countries. Rather than breaking the UI or showing misleading zeros, the app detects null API responses and displays `N/A` with an empty progress bar, keeping the interface readable regardless of data availability.
+
+- **Dual-axis chart removed** — The original design showed GDP and Life Expectancy together on a single chart with two Y-axes. In practice this made the chart cluttered and hard to read because the scales (USD vs. years) were incompatible visually. The decision was made to show one indicator per chart with a consistent single axis, which also made the country comparison overlay much cleaner.
+
+- **HAProxy conflict on Lb01** — When attempting to install and run Nginx as the load balancer, the service failed to start because HAProxy was already running on port 80. Rather than fighting the existing process, the approach was switched to configure HAProxy directly. This turned out to be a better outcome — HAProxy was already set up with SSL certificates and HTTPS support, which Nginx would have required additional configuration to achieve.
+
+- **XSS protection** — Because user-supplied country names are processed and results are injected into the DOM via `innerHTML`, there was a risk of script injection if a malicious string was entered. A `sanitizeInput()` function was added to strip HTML characters from all inputs before processing, and an `escapeHTML()` function was added to encode any dynamic content before it is inserted into the DOM.
 
 ---
 
 ## Credits & Resources
 
-| Resource | Link |
+| Resource | Version / Link |
 |---|---|
 | World Bank Indicators API | https://datahelpdesk.worldbank.org/knowledgebase/articles/889392 |
-| Chart.js | https://www.chartjs.org/ |
+| Chart.js | v4.x (latest) — https://www.chartjs.org/ |
 | World Bank Open Data | https://data.worldbank.org/ |
 
 ---
+
 
