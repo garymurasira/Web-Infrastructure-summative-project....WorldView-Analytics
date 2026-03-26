@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorldView Analytics</title>
+  <link rel="stylesheet" href="styles/styles.css">
+</head>
+
+<body>
+  <div class="container">
+    <!-- LANDING PAGE -->
+    <div id="landing">
+      <header>
+        <h1>WorldView Analytics</h1>
+        <p class="tagline">190+ countries &nbsp;·&nbsp; Live World Bank data</p>
+      </header>
+      <p class="description">Explore economic indicators, development metrics, and more — powered by the World Bank API.</p>
+
+      <div class="search-container">
+        <input type="search" class="search-input" placeholder="Search for a country..." id="countrySearch"
+          onkeypress="if(event.key==='Enter') searchCountry()">
+        <button class="search-btn" onclick="searchCountry()">Search</button>
+      </div>
+
+      <div class="quick-picks">
+        <h2>Quick Picks</h2>
+        <div class="quick-grid">
+          <button class="quick-btn" onclick="selectCountry('United States')">USA</button>
+          <button class="quick-btn" onclick="selectCountry('Nigeria')">Nigeria</button>
+          <button class="quick-btn" onclick="selectCountry('Brazil')">Brazil</button>
+          <button class="quick-btn" onclick="selectCountry('India')">India</button>
+          <button class="quick-btn" onclick="selectCountry('Germany')">Germany</button>
+        </div>
+      </div>
+
+      <p class="credit">Data powered by the World Bank API</p>
+    </div>
+
+    <!-- Enhanced Dashboard -->
+    <section id="dashboard" style="display: none;">
+      <!-- Navbar -->
+      <nav class="db-navbar">
+        <div class="nav-left">
+          <h1>WorldView Analytics</h1>
+        </div>
+        <div class="nav-right">
+          <input type="search" class="db-search" placeholder="Search countries..." id="dbSearch">
+        </div>
+      </nav>
+
+      <!-- Country Header -->
+      <div class="country-header">
+        <div class="country-left">
+          <h2 id="countryName" class="country-name">Kenya</h2>
+          <p id="countryRegion" class="country-region">Sub-Saharan Africa</p>
+        </div>
+        <div class="country-right">
+          <span id="countryStatus" class="status-badge">Lower middle income</span>
+          <button class="compare-btn">Compare</button>
+        </div>
+      </div>
+
+      <!-- Metrics Cards -->
+      <div class="metrics-grid" id="metricsGrid">
+        <!-- Filled by JS -->
+      </div>
+
+      <div class="dashboard-main">
+        <!-- Left Sidebar -->
+        <div class="indicators-sidebar">
+          <h3>Indicators</h3>
+          <div class="category-tabs">
+            <button class="tab-btn active" data-category="economy">Economy</button>
+            <button class="tab-btn" data-category="health">Health</button>
+            <button class="tab-btn" data-category="technology">Technology</button>
+            <button class="tab-btn" data-category="environment">Environment</button>
+            <button class="tab-btn" data-category="education">Education</button>
+            <button class="tab-btn" data-category="population">Population</button>
+            <button class="tab-btn" data-category="poverty">Poverty</button>
+            <button class="tab-btn" data-category="gender">Gender</button>
+            <button class="tab-btn" data-category="inequality">Inequality</button>
+          </div>
+          <select class="sort-select">
+            <option>Default</option>
+            <option>Highest to Lowest</option>
+            <option>Lowest to Highest</option>
+          </select>
+          <div id="indicator-list" class="indicator-list">
+            <!-- Dynamic list populated by JS -->
+          </div>
+        </div>
+
+        <!-- Right Chart -->
+        <div class="chart-section">
+          <h3 id="chartTitle">Trends Over Time</h3>
+          <canvas id="dataChart"></canvas>
+        </div>
+      </div>
+
+      <div id="countryInfo"></div>
+    </section>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="scripts/config.js"></script>
+  <script src="scripts/api.js"></script>
+  <script src="scripts/landing.js"></script>
+  <script src="scripts/dashboard.js"></script>
+
+
+
+
+
+
+
+</body>
+
+</html>
